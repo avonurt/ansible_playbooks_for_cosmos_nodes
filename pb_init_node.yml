@@ -1,0 +1,127 @@
+- name: Init Node
+  hosts: "{{ host }}"
+  vars:
+    golang_installation_dir: /usr/local/go
+    golang_go_path: "{{ansible_user_dir}}/go"
+    path: /sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:{{golang_installation_dir}}/bin:{{golang_go_path}}/bin
+    path_to_command: "{{golang_go_path}}/bin/{{project_command}}"
+  gather_facts: true
+  roles:
+    - role: gantsign.golang
+      golang_gopath: "$HOME/go"
+      golang_install_dir: "{{ golang_installation_dir }}"
+      golang_version: "{{ go_version }}"
+  tasks:
+    - name: Install Build Issentials
+      apt:
+        pkg:
+          - make
+          - build-essential
+          - ncdu
+          - bsdmainutils
+          - nload
+        update_cache: yes
+        state: present
+      become: yes
+
+    - name: Delete old repository if present
+      file:
+        state: absent
+        path: "{{project_name}}"
+
+    - name: Delete old data if present
+      file:
+        state: absent
+        path: "{{project_path}}"
+
+    - name: Download {{ project_name }} repository and checkout
+      ansible.builtin.git:
+        repo: "{{ repo }}"
+        dest: "{{ project_name }}"
+        version: "{{ version }}"
+
+    - name: Build {{ project_name }} project
+      ansible.builtin.command: make install
+      environment:
+        PATH: "{{path}}"
+      args:
+        chdir: "{{ project_name }}"
+
+    - name: Init {{ project_name }} project
+      environment:
+        PATH: "{{path}}"
+      ansible.builtin.command: "{{project_command}} init {{ moniker }} --chain-id {{ chain_id }}"
+
+    - name: Configure persistent peers
+      lineinfile:
+        path: "{{project_path}}/config/config.toml"
+        regexp: "^persistent_peers ="
+        line: 'persistent_peers = "{{ persistent_peers }}"'
+
+    - name: Turn of indexing
+      lineinfile:
+        path: "{{project_path}}/config/config.toml"
+        regexp: "^indexer ="
+        line: indexer = "null"
+
+    - name: Set custom prunning
+      lineinfile:
+        path: "{{project_path}}/config/app.toml"
+        regexp: "^pruning ="
+        line: pruning = "custom"
+
+    - name: Set pruning keep recent
+      lineinfile:
+        path: "{{project_path}}/config/app.toml"
+        regexp: "^pruning-keep-recent ="
+        line: pruning-keep-recent = "100"
+
+    - name: Set pruning keep every
+      lineinfile:
+        path: "{{project_path}}/config/app.toml"
+        regexp: "^pruning-keep-every ="
+        line: pruning-keep-every = "0"
+
+    - name: Set pruning interval
+      lineinfile:
+        path: "{{project_path}}/config/app.toml"
+        regexp: "^pruning-interval ="
+        line: pruning-interval = "10"
+
+    - name: Create {{ project_name }} service
+      template:
+        src: service_template.j2
+        dest: /etc/systemd/system/{{project_command}}.service
+      become: true
+
+    - name: Add storage persistent to journald.conf
+      lineinfile:
+        path: /etc/systemd/journald.conf
+        line: Storage=persistent
+        state: present
+      become: true
+
+    - name: Download genesis file
+      get_url:
+        url: "{{ link_to_genesis_file }}"
+        dest: "{{ project_path }}/config"
+
+    - name: Allow SSH
+      community.general.ufw:
+        rule: allow
+        port: "{{ ssh_port }}"
+        proto: tcp
+      become: true
+
+    - name: Allow node port
+      community.general.ufw:
+        rule: allow
+        port: "{{ node_port }}"
+        proto: tcp
+      become: true
+
+    - name: Enable UFW
+      community.general.ufw:
+        state: enabled
+        policy: deny
+      become: true

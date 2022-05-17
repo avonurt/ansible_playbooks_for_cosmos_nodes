@@ -1,0 +1,8 @@
+- name: Stop Node
+  hosts: "{{ host }}"
+  become: yes
+  tasks:
+    - name: Make sure a service unit is stopped
+      ansible.builtin.systemd:
+        state: stopped
+        name: "{{ service_name }}"

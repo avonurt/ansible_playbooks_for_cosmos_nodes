@@ -1,0 +1,14 @@
+{
+  "moniker": "your_moniker",
+  "project_name": "umee",
+  "project_command": "umeed",
+  "project_path": ".umee",
+  "chain_id": "umeemania-1",
+  "repo": "https://github.com/umee-network/umee.git",
+  "version": "facu/fix-testnet-halt",
+  "persistent_peers": "67cd50cac0eff503a7c9efd537d369cc7a3ebe96@34.83.162.159:26656,08f30f7119ae1317082d50fac6a08e6f2400126f@34.83.251.68:26656,08840edc6775bd7a298269f3343c554e5af0359f@35.202.178.94:26656,2e5320f284b65e388d968626825f3ffbf3f3f985@34.97.181.238:26656",
+  "link_to_genesis_file": "https://raw.githubusercontent.com/umee-network/testnets/main/networks/umeemania-1/genesis.json",
+  "ssh_port": 22,
+  "node_port": 26656,
+  "go_version": 1.17
+}

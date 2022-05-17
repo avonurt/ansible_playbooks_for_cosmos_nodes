@@ -1,0 +1,1 @@
+umee_node  ansible_host=16.5.16.75 ansible_user=root ansible_port=22

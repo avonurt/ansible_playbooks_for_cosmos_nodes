@@ -1,0 +1,8 @@
+- name: Start Node
+  hosts: "{{ host }}"
+  become: yes
+  tasks:
+    - name: Make sure a service unit is running
+      ansible.builtin.systemd:
+        state: started
+        name: "{{ service_name }}"

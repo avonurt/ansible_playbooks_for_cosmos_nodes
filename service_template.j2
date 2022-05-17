@@ -1,0 +1,14 @@
+[Unit]
+Description={{project_name}} node
+After=network.target
+
+[Service]
+User={{ ansible_user_id }}
+Type=simple
+ExecStart={{ path_to_command }} start
+Restart=on-failure
+RestartSec=10
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
